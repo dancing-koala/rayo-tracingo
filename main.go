@@ -14,13 +14,11 @@ func main() {
 
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {
-			r := float64(i) / float64(nx)
-			g := float64(j) / float64(ny)
-			b := float64(0.2)
+			v := newVec3From(float64(i)/float64(nx), float64(j)/float64(ny), float64(0.2))
 
-			ir := int(255.99 * r)
-			ig := int(255.99 * g)
-			ib := int(255.99 * b)
+			ir := int(255.99 * v.at(0))
+			ig := int(255.99 * v.at(1))
+			ib := int(255.99 * v.at(2))
 
 			data += fmt.Sprintf("%d %d %d\n", ir, ig, ib)
 		}
@@ -44,7 +42,7 @@ func writeFile(data []byte) {
 
 	checkErr(err)
 
-	fmt.Printf("Wrote %d bytes", n)
+	fmt.Printf("Wrote %d bytes\n", n)
 }
 
 func checkErr(err error) {
