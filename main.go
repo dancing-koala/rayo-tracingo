@@ -5,20 +5,48 @@ import (
 	"os"
 )
 
-func main() {
+func color(r *ray) *vec3 {
+	unitDirection := unitVector(r.direction())
+	t := 0.5 * (unitDirection.y() + 1.0)
+	return add(
+		scalarMul(newVec3From(1.0, 1.0, 1.0), 1.0-t),
+		scalarMul(newVec3From(0.5, 0.7, 1.0), t),
+	)
+}
 
+func main() {
 	nx := 200
 	ny := 100
 
 	data := getPPMHeader(nx, ny)
 
+	lowerLeftCorner := newVec3From(-2.0, -1.0, -1.0)
+	horizontal := newVec3From(4.0, 0.0, 0.0)
+	vertical := newVec3From(0.0, 2.0, 0.0)
+	origin := newVec3()
+
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {
-			v := newVec3From(float64(i)/float64(nx), float64(j)/float64(ny), float64(0.2))
 
-			ir := int(255.99 * v.at(0))
-			ig := int(255.99 * v.at(1))
-			ib := int(255.99 * v.at(2))
+			u := float64(i) / float64(nx)
+			v := float64(j) / float64(ny)
+
+			r := newRayFrom(
+				origin,
+				add(
+					lowerLeftCorner,
+					add(
+						scalarMul(horizontal, u),
+						scalarMul(vertical, v),
+					),
+				),
+			)
+
+			c := color(r)
+
+			ir := int(255.99 * c.at(0))
+			ig := int(255.99 * c.at(1))
+			ib := int(255.99 * c.at(2))
 
 			data += fmt.Sprintf("%d %d %d\n", ir, ig, ib)
 		}
