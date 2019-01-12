@@ -2,12 +2,34 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 )
 
+func hitSphere(center *vec3, radius float64, r *ray) float64 {
+	oc := sub(r.origin(), center)
+	a := dot(r.direction(), r.direction())
+	b := 2.0 * dot(oc, r.direction())
+	c := dot(oc, oc) - radius*radius
+	discriminant := b*b - 4.0*a*c
+
+	if discriminant < 0 {
+		return -1.0
+	}
+
+	return (-b - math.Sqrt(discriminant)) / (2.0 * a)
+}
+
 func color(r *ray) *vec3 {
+	t := hitSphere(newVec3From(0, 0, -1), 0.5, r)
+
+	if t > 0 {
+		n := unitVector(sub(r.pointAtParam(t), newVec3From(0, 0, -1.0)))
+		return scalarMul(newVec3From(n.x()+1, n.y()+1, n.z()+1), 0.5)
+	}
+
 	unitDirection := unitVector(r.direction())
-	t := 0.5 * (unitDirection.y() + 1.0)
+	t = 0.5 * (unitDirection.y() + 1.0)
 	return add(
 		scalarMul(newVec3From(1.0, 1.0, 1.0), 1.0-t),
 		scalarMul(newVec3From(0.5, 0.7, 1.0), t),
