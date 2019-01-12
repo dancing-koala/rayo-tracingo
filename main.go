@@ -7,12 +7,40 @@ import (
 	"os"
 )
 
+func randomInUnitSphere() *vec3 {
+	var p *vec3
+
+	unitVec := newVec3From(1.0, 1.0, 1.0)
+
+	for {
+		p = vec3ScalarMul(
+			vec3Sub(
+				newVec3From(rand.Float64(), rand.Float64(), rand.Float64()),
+				unitVec,
+			),
+			2.0,
+		)
+
+		if p.squaredLength() < 1.0 {
+			return p
+		}
+	}
+}
+
 func color(r *ray, hitables hitableList) *vec3 {
 	record := &hitRecord{}
 
-	if hitables.hit(r, 0.0, math.MaxFloat64, record) {
+	if hitables.hit(r, 0.001, math.MaxFloat64, record) {
+		target := vec3Add(
+			vec3Add(
+				record.p,
+				record.normal,
+			),
+			randomInUnitSphere(),
+		)
+
 		return vec3ScalarMul(
-			newVec3From(record.normal.x()+1, record.normal.y()+1, record.normal.z()+1),
+			color(newRayFrom(record.p, vec3Sub(target, record.p)), hitables),
 			0.5,
 		)
 	}
@@ -28,7 +56,7 @@ func color(r *ray, hitables hitableList) *vec3 {
 
 func main() {
 	nx, ny := 200, 100
-	ns := 100.0
+	ns := 50.0
 
 	data := getPPMHeader(nx, ny)
 
@@ -53,6 +81,8 @@ func main() {
 			}
 
 			c.scalarDiv(ns)
+
+			c = newVec3From(math.Sqrt(c.at(0)), math.Sqrt(c.at(1)), math.Sqrt(c.at(2)))
 
 			ir := int(255.99 * c.at(0))
 			ig := int(255.99 * c.at(1))
