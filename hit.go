@@ -1,9 +1,10 @@
 package main
 
 type hitRecord struct {
-	t      float64
-	p      *vec3
-	normal *vec3
+	t            float64
+	p            *vec3
+	normal       *vec3
+	itemMaterial material
 }
 
 type hitable interface {
@@ -25,11 +26,16 @@ func (h *hitableList) hit(r *ray, tMin, tMax float64, record *hitRecord) bool {
 			hitAnything = true
 			closestSoFar = tmpRec.t
 
-			record.normal = tmpRec.normal
-			record.p = tmpRec.p
-			record.t = tmpRec.t
+			copyHitRecord(tmpRec, record)
 		}
 	}
 
 	return hitAnything
+}
+
+func copyHitRecord(src, dst *hitRecord) {
+	dst.normal = src.normal
+	dst.p = src.p
+	dst.t = src.t
+	dst.itemMaterial = src.itemMaterial
 }

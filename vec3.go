@@ -78,6 +78,12 @@ func vec3ScalarDiv(v *vec3, t float64) *vec3 {
 	return newVec3From(v.e[0]/t, v.e[1]/t, v.e[2]/t)
 }
 
+func vec3Copy(src, dst *vec3) {
+	dst.e[0] = src.e[0]
+	dst.e[1] = src.e[1]
+	dst.e[2] = src.e[2]
+}
+
 func dot(v1, v2 *vec3) float64 {
 	return v1.e[0]*v2.e[0] + v1.e[1]*v2.e[1] + v1.e[2]*v2.e[2]
 }

@@ -27,22 +27,22 @@ func randomInUnitSphere() *vec3 {
 	}
 }
 
-func color(r *ray, hitables hitableList) *vec3 {
+func color(r *ray, hitables hitableList, depth int) *vec3 {
 	record := &hitRecord{}
 
 	if hitables.hit(r, 0.001, math.MaxFloat64, record) {
-		target := vec3Add(
-			vec3Add(
-				record.p,
-				record.normal,
-			),
-			randomInUnitSphere(),
-		)
 
-		return vec3ScalarMul(
-			color(newRayFrom(record.p, vec3Sub(target, record.p)), hitables),
-			0.5,
-		)
+		scatteredRay := newRay()
+		attenuation := newVec3()
+
+		if depth < 50 && record.itemMaterial.scatter(r, record, attenuation, scatteredRay) {
+			return vec3Mul(
+				attenuation,
+				color(scatteredRay, hitables, depth+1),
+			)
+		} else {
+			return newVec3()
+		}
 	}
 
 	unitDirection := unitVector(r.direction())
@@ -55,14 +55,16 @@ func color(r *ray, hitables hitableList) *vec3 {
 }
 
 func main() {
-	nx, ny := 200, 100
-	ns := 50.0
+	nx, ny := 300, 150
+	ns := 100.0
 
 	data := getPPMHeader(nx, ny)
 
-	world := make(hitableList, 2)
-	world[0] = newSphereFrom(newVec3From(0, 0, -1.0), 0.5)
-	world[1] = newSphereFrom(newVec3From(0, -100.5, -1.0), 100)
+	world := make(hitableList, 4)
+	world[0] = newSphereFrom(newVec3From(0, 0, -1.0), 0.5, newLambertianFrom(newVec3From(0.8, 0.3, 0.3)))
+	world[1] = newSphereFrom(newVec3From(0, -100.5, -1.0), 100, newLambertianFrom(newVec3From(0.8, 0.8, 0.0)))
+	world[2] = newSphereFrom(newVec3From(1.0, 0, -1.0), 0.5, newMetalFrom(newVec3From(0.8, 0.6, 0.2), 1.0))
+	world[3] = newSphereFrom(newVec3From(-1.0, 0, -1.0), 0.5, newMetalFrom(newVec3From(0.8, 0.8, 0.8), 0.3))
 
 	cam := newCamera()
 
@@ -77,7 +79,7 @@ func main() {
 
 				r := cam.getRay(u, v)
 
-				c.add(color(r, world))
+				c.add(color(r, world, 0))
 			}
 
 			c.scalarDiv(ns)
