@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 )
 
@@ -27,36 +28,31 @@ func color(r *ray, hitables hitableList) *vec3 {
 
 func main() {
 	nx, ny := 200, 100
+	ns := 100.0
 
 	data := getPPMHeader(nx, ny)
-
-	lowerLeftCorner := newVec3From(-2.0, -1.0, -1.0)
-	horizontal := newVec3From(4.0, 0.0, 0.0)
-	vertical := newVec3From(0.0, 2.0, 0.0)
-	origin := newVec3()
 
 	world := make(hitableList, 2)
 	world[0] = newSphereFrom(newVec3From(0, 0, -1.0), 0.5)
 	world[1] = newSphereFrom(newVec3From(0, -100.5, -1.0), 100)
 
+	cam := newCamera()
+
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {
 
-			u := float64(i) / float64(nx)
-			v := float64(j) / float64(ny)
+			c := newVec3()
 
-			r := newRayFrom(
-				origin,
-				vec3Add(
-					lowerLeftCorner,
-					vec3Add(
-						vec3ScalarMul(horizontal, u),
-						vec3ScalarMul(vertical, v),
-					),
-				),
-			)
+			for k := 0; k < int(ns); k++ {
+				u := (float64(i) + rand.Float64()) / float64(nx)
+				v := (float64(j) + rand.Float64()) / float64(ny)
 
-			c := color(r, world)
+				r := cam.getRay(u, v)
+
+				c.add(color(r, world))
+			}
+
+			c.scalarDiv(ns)
 
 			ir := int(255.99 * c.at(0))
 			ig := int(255.99 * c.at(1))
