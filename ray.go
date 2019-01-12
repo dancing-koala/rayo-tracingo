@@ -25,5 +25,5 @@ func (r *ray) direction() *vec3 {
 }
 
 func (r *ray) pointAtParam(t float64) *vec3 {
-	return add(r.a, scalarMul(r.b, t))
+	return vec3Add(r.a, vec3ScalarMul(r.b, t))
 }

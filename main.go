@@ -10,7 +10,7 @@ func color(r *ray, hitables hitableList) *vec3 {
 	record := &hitRecord{}
 
 	if hitables.hit(r, 0.0, math.MaxFloat64, record) {
-		return scalarMul(
+		return vec3ScalarMul(
 			newVec3From(record.normal.x()+1, record.normal.y()+1, record.normal.z()+1),
 			0.5,
 		)
@@ -19,9 +19,9 @@ func color(r *ray, hitables hitableList) *vec3 {
 	unitDirection := unitVector(r.direction())
 	t := 0.5 * (unitDirection.y() + 1.0)
 
-	return add(
-		scalarMul(newVec3From(1.0, 1.0, 1.0), 1.0-t),
-		scalarMul(newVec3From(0.5, 0.7, 1.0), t),
+	return vec3Add(
+		vec3ScalarMul(newVec3From(1.0, 1.0, 1.0), 1.0-t),
+		vec3ScalarMul(newVec3From(0.5, 0.7, 1.0), t),
 	)
 }
 
@@ -47,11 +47,11 @@ func main() {
 
 			r := newRayFrom(
 				origin,
-				add(
+				vec3Add(
 					lowerLeftCorner,
-					add(
-						scalarMul(horizontal, u),
-						scalarMul(vertical, v),
+					vec3Add(
+						vec3ScalarMul(horizontal, u),
+						vec3ScalarMul(vertical, v),
 					),
 				),
 			)

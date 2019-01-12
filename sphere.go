@@ -23,7 +23,7 @@ func newSphereFrom(center *vec3, radius float64) *sphere {
 }
 
 func (s *sphere) hit(r *ray, tMin, tMax float64, record *hitRecord) bool {
-	oc := sub(r.origin(), s.center)
+	oc := vec3Sub(r.origin(), s.center)
 	a := dot(r.direction(), r.direction())
 	b := dot(oc, r.direction())
 	c := dot(oc, oc) - s.radius*s.radius
@@ -36,8 +36,8 @@ func (s *sphere) hit(r *ray, tMin, tMax float64, record *hitRecord) bool {
 		if tMin < temp && temp < tMax {
 			record.t = temp
 			record.p = r.pointAtParam(temp)
-			record.normal = scalarDiv(
-				sub(record.p, s.center),
+			record.normal = vec3ScalarDiv(
+				vec3Sub(record.p, s.center),
 				s.radius,
 			)
 			return true
@@ -48,8 +48,8 @@ func (s *sphere) hit(r *ray, tMin, tMax float64, record *hitRecord) bool {
 		if tMin < temp && temp < tMax {
 			record.t = temp
 			record.p = r.pointAtParam(temp)
-			record.normal = scalarDiv(
-				sub(record.p, s.center),
+			record.normal = vec3ScalarDiv(
+				vec3Sub(record.p, s.center),
 				s.radius,
 			)
 			return true

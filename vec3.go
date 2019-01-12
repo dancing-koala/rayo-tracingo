@@ -29,7 +29,7 @@ func (v *vec3) g() float64 { return v.e[1] }
 
 func (v *vec3) b() float64 { return v.e[2] }
 
-func negate(v *vec3) *vec3 {
+func vec3Negate(v *vec3) *vec3 {
 	return newVec3From(-v.e[0], -v.e[1], -v.e[2])
 }
 
@@ -54,27 +54,27 @@ func (v *vec3) makeUnitVector() {
 	v.e[2] *= k
 }
 
-func add(v1, v2 *vec3) *vec3 {
+func vec3Add(v1, v2 *vec3) *vec3 {
 	return newVec3From(v1.e[0]+v2.e[0], v1.e[1]+v2.e[1], v1.e[2]+v2.e[2])
 }
 
-func sub(v1, v2 *vec3) *vec3 {
+func vec3Sub(v1, v2 *vec3) *vec3 {
 	return newVec3From(v1.e[0]-v2.e[0], v1.e[1]-v2.e[1], v1.e[2]-v2.e[2])
 }
 
-func mul(v1, v2 *vec3) *vec3 {
+func vec3Mul(v1, v2 *vec3) *vec3 {
 	return newVec3From(v1.e[0]*v2.e[0], v1.e[1]*v2.e[1], v1.e[2]*v2.e[2])
 }
 
-func div(v1, v2 *vec3) *vec3 {
+func vec3Div(v1, v2 *vec3) *vec3 {
 	return newVec3From(v1.e[0]/v2.e[0], v1.e[1]/v2.e[1], v1.e[2]/v2.e[2])
 }
 
-func scalarMul(v *vec3, t float64) *vec3 {
+func vec3ScalarMul(v *vec3, t float64) *vec3 {
 	return newVec3From(v.e[0]*t, v.e[1]*t, v.e[2]*t)
 }
 
-func scalarDiv(v *vec3, t float64) *vec3 {
+func vec3ScalarDiv(v *vec3, t float64) *vec3 {
 	return newVec3From(v.e[0]/t, v.e[1]/t, v.e[2]/t)
 }
 
@@ -128,5 +128,5 @@ func (v *vec3) scalarDiv(t float64) {
 }
 
 func unitVector(v *vec3) *vec3 {
-	return scalarDiv(v, v.length())
+	return vec3ScalarDiv(v, v.length())
 }
