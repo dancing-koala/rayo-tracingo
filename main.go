@@ -55,16 +55,16 @@ func color(r *ray, hitables hitableList, depth int) *vec3 {
 }
 
 func main() {
-	nx, ny := 300, 150
-	ns := 100.0
+	nx, ny := 200, 100
+	ns := 50.0
 
 	data := getPPMHeader(nx, ny)
 
 	world := make(hitableList, 4)
-	world[0] = newSphereFrom(newVec3From(0, 0, -1.0), 0.5, newLambertianFrom(newVec3From(0.8, 0.3, 0.3)))
+	world[0] = newSphereFrom(newVec3From(0, 0, -1.0), 0.5, newLambertianFrom(newVec3From(0.1, 0.2, 0.5)))
 	world[1] = newSphereFrom(newVec3From(0, -100.5, -1.0), 100, newLambertianFrom(newVec3From(0.8, 0.8, 0.0)))
 	world[2] = newSphereFrom(newVec3From(1.0, 0, -1.0), 0.5, newMetalFrom(newVec3From(0.8, 0.6, 0.2), 1.0))
-	world[3] = newSphereFrom(newVec3From(-1.0, 0, -1.0), 0.5, newMetalFrom(newVec3From(0.8, 0.8, 0.8), 0.3))
+	world[3] = newSphereFrom(newVec3From(-1.0, 0, -1.0), 0.5, newDielectricFrom(1.5))
 
 	cam := newCamera()
 
@@ -84,7 +84,7 @@ func main() {
 
 			c.scalarDiv(ns)
 
-			c = newVec3From(math.Sqrt(c.at(0)), math.Sqrt(c.at(1)), math.Sqrt(c.at(2)))
+			c = newVec3From(math.Sqrt(c.r()), math.Sqrt(c.g()), math.Sqrt(c.b()))
 
 			ir := int(255.99 * c.at(0))
 			ig := int(255.99 * c.at(1))

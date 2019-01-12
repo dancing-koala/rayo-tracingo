@@ -24,6 +24,11 @@ func (r *ray) direction() *vec3 {
 	return r.b
 }
 
+func (r *ray) set(origin, direction *vec3) {
+	r.a = origin
+	r.b = direction
+}
+
 func (r *ray) pointAtParam(t float64) *vec3 {
 	return vec3Add(r.a, vec3ScalarMul(r.b, t))
 }

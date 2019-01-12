@@ -29,6 +29,18 @@ func (v *vec3) g() float64 { return v.e[1] }
 
 func (v *vec3) b() float64 { return v.e[2] }
 
+func (v *vec3) set(x, y, z float64) {
+	v.e[0] = x
+	v.e[1] = y
+	v.e[2] = z
+}
+
+func (v *vec3) copyFrom(src *vec3) {
+	v.e[0] = src.e[0]
+	v.e[1] = src.e[1]
+	v.e[2] = src.e[2]
+}
+
 func vec3Negate(v *vec3) *vec3 {
 	return newVec3From(-v.e[0], -v.e[1], -v.e[2])
 }
