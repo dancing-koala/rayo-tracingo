@@ -40,9 +40,9 @@ func color(r *ray, hitables hitableList, depth int) *vec3 {
 				attenuation,
 				color(scatteredRay, hitables, depth+1),
 			)
-		} else {
-			return newVec3()
 		}
+
+		return newVec3()
 	}
 
 	unitDirection := unitVector(r.direction())
@@ -56,7 +56,7 @@ func color(r *ray, hitables hitableList, depth int) *vec3 {
 
 func main() {
 	nx, ny := 200, 100
-	ns := 50.0
+	ns := 100.0
 
 	data := getPPMHeader(nx, ny)
 
@@ -66,7 +66,13 @@ func main() {
 	world[2] = newSphereFrom(newVec3From(1.0, 0, -1.0), 0.5, newMetalFrom(newVec3From(0.8, 0.6, 0.2), 1.0))
 	world[3] = newSphereFrom(newVec3From(-1.0, 0, -1.0), 0.5, newDielectricFrom(1.5))
 
-	cam := newCamera()
+	cam := newCamera(
+		newVec3From(-2.0, 2.0, 1.0),
+		newVec3From(0.0, 0.0, -1.0),
+		newVec3From(0.0, 1.0, 0.0),
+		45,
+		float64(nx)/float64(ny),
+	)
 
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {

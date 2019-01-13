@@ -41,10 +41,6 @@ func (v *vec3) copyFrom(src *vec3) {
 	v.e[2] = src.e[2]
 }
 
-func vec3Negate(v *vec3) *vec3 {
-	return newVec3From(-v.e[0], -v.e[1], -v.e[2])
-}
-
 func (v *vec3) at(i int) float64 { return v.e[i] }
 
 func (v *vec3) length() float64 {
@@ -64,6 +60,10 @@ func (v *vec3) makeUnitVector() {
 	v.e[0] *= k
 	v.e[1] *= k
 	v.e[2] *= k
+}
+
+func vec3Negate(v *vec3) *vec3 {
+	return newVec3From(-v.e[0], -v.e[1], -v.e[2])
 }
 
 func vec3Add(v1, v2 *vec3) *vec3 {
@@ -108,41 +108,53 @@ func cross(v1, v2 *vec3) *vec3 {
 	)
 }
 
-func (v *vec3) add(v2 *vec3) {
+func (v *vec3) add(v2 *vec3) *vec3 {
 	v.e[0] += v2.e[0]
 	v.e[1] += v2.e[1]
 	v.e[2] += v2.e[2]
+
+	return v
 }
 
-func (v *vec3) mul(v2 *vec3) {
+func (v *vec3) mul(v2 *vec3) *vec3 {
 	v.e[0] *= v2.e[0]
 	v.e[1] *= v2.e[1]
 	v.e[2] *= v2.e[2]
+
+	return v
 }
 
-func (v *vec3) div(v2 *vec3) {
+func (v *vec3) div(v2 *vec3) *vec3 {
 	v.e[0] /= v2.e[0]
 	v.e[1] /= v2.e[1]
 	v.e[2] /= v2.e[2]
+
+	return v
 }
-func (v *vec3) sub(v2 *vec3) {
+func (v *vec3) sub(v2 *vec3) *vec3 {
 	v.e[0] -= v2.e[0]
 	v.e[1] -= v2.e[1]
 	v.e[2] -= v2.e[2]
+
+	return v
 }
 
-func (v *vec3) scalarMul(t float64) {
+func (v *vec3) scalarMul(t float64) *vec3 {
 	v.e[0] *= t
 	v.e[1] *= t
 	v.e[2] *= t
+
+	return v
 }
 
-func (v *vec3) scalarDiv(t float64) {
+func (v *vec3) scalarDiv(t float64) *vec3 {
 	var k = 1.0 / t
 
 	v.e[0] *= k
 	v.e[1] *= k
 	v.e[2] *= k
+
+	return v
 }
 
 func unitVector(v *vec3) *vec3 {
