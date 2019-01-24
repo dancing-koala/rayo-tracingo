@@ -145,6 +145,18 @@ func (v *vec3) scalarDiv(t float64) {
 	v.e[2] *= k
 }
 
+func (v *vec3) reset() {
+	v.e[0] = 0.0
+	v.e[1] = 0.0
+	v.e[2] = 0.0
+}
+
+func (v *vec3) sqrt() {
+	v.e[0] = math.Sqrt(v.e[0])
+	v.e[1] = math.Sqrt(v.e[1])
+	v.e[2] = math.Sqrt(v.e[2])
+}
+
 func unitVector(v *vec3) *vec3 {
 	return vec3ScalarDiv(v, v.length())
 }

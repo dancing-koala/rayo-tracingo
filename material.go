@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-func randomInUnitSphere() *vec3 {
+func randomInUnitSphere(r *rand.Rand) *vec3 {
 	var p *vec3
 
 	unitVec := newVec3From(1.0, 1.0, 1.0)
@@ -13,7 +13,11 @@ func randomInUnitSphere() *vec3 {
 	for {
 		p = vec3ScalarMul(
 			vec3Sub(
-				newVec3From(rand.Float64(), rand.Float64(), rand.Float64()),
+				newVec3From(
+					r.Float64(),
+					r.Float64(),
+					r.Float64(),
+				),
 				unitVec,
 			),
 			2.0,
@@ -26,7 +30,7 @@ func randomInUnitSphere() *vec3 {
 }
 
 type material interface {
-	scatter(inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool
+	scatter(r *rand.Rand, inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool
 }
 
 type lambertian struct {
@@ -39,13 +43,13 @@ func newLambertian(albedo *vec3) *lambertian {
 	}
 }
 
-func (l *lambertian) scatter(inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
+func (l *lambertian) scatter(r *rand.Rand, inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
 	target := vec3Add(
 		vec3Add(
 			record.p,
 			record.normal,
 		),
-		randomInUnitSphere(),
+		randomInUnitSphere(r),
 	)
 
 	scatteredRay.a = record.p
@@ -83,13 +87,13 @@ func reflect(v, n *vec3) *vec3 {
 	)
 }
 
-func (m *metal) scatter(inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
+func (m *metal) scatter(r *rand.Rand, inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
 	reflected := reflect(unitVector(inputRay.direction()), record.normal)
 	scatteredRay.set(
 		record.p,
 		vec3Add(
 			reflected,
-			vec3ScalarMul(randomInUnitSphere(), m.fuzz),
+			vec3ScalarMul(randomInUnitSphere(r), m.fuzz),
 		),
 	)
 	vec3Copy(m.albedo, attenuation)
@@ -107,7 +111,7 @@ func newDielectric(refractIndex float64) *dielectric {
 	}
 }
 
-func (d *dielectric) scatter(inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
+func (d *dielectric) scatter(r *rand.Rand, inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
 
 	var niOverNt, cosine, reflectProb float64
 	var outwardNormal *vec3
@@ -132,7 +136,7 @@ func (d *dielectric) scatter(inputRay *ray, record *hitRecord, attenuation *vec3
 		reflectProb = 10
 	}
 
-	if reflectProb > rand.Float64() {
+	if reflectProb > r.Float64() {
 		scatteredRay.set(record.p, reflected)
 	} else {
 		scatteredRay.set(record.p, refracted)

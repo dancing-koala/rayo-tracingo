@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-func randomInUnitDisk() *vec3 {
+func randomInUnitDisk(r *rand.Rand) *vec3 {
 	var p *vec3
 
 	v := newVec3From(1.0, 1.0, 0.0)
@@ -13,7 +13,7 @@ func randomInUnitDisk() *vec3 {
 	for {
 		p = vec3Sub(
 			vec3ScalarMul(
-				newVec3From(rand.Float64(), rand.Float64(), 0.0),
+				newVec3From(r.Float64(), r.Float64(), 0.0),
 				2.0,
 			),
 			v,
@@ -69,9 +69,9 @@ func newCamera(lookfrom, lookat, vup *vec3, vfov, aspect, aperture, focusDist fl
 	}
 }
 
-func (c *camera) getRay(s, t float64) *ray {
+func (c *camera) getRay(r *rand.Rand, s, t float64) *ray {
 
-	rd := vec3ScalarMul(randomInUnitDisk(), c.lensRadius)
+	rd := vec3ScalarMul(randomInUnitDisk(r), c.lensRadius)
 	offset := vec3Add(
 		vec3ScalarMul(c.u, rd.x()),
 		vec3ScalarMul(c.v, rd.y()),
