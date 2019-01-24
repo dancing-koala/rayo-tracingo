@@ -5,6 +5,26 @@ import (
 	"math/rand"
 )
 
+func randomInUnitSphere() *vec3 {
+	var p *vec3
+
+	unitVec := newVec3From(1.0, 1.0, 1.0)
+
+	for {
+		p = vec3ScalarMul(
+			vec3Sub(
+				newVec3From(rand.Float64(), rand.Float64(), rand.Float64()),
+				unitVec,
+			),
+			2.0,
+		)
+
+		if p.squaredLength() < 1.0 {
+			return p
+		}
+	}
+}
+
 type material interface {
 	scatter(inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool
 }
@@ -13,7 +33,7 @@ type lambertian struct {
 	albedo *vec3
 }
 
-func newLambertianFrom(albedo *vec3) *lambertian {
+func newLambertian(albedo *vec3) *lambertian {
 	return &lambertian{
 		albedo: albedo,
 	}
@@ -41,7 +61,7 @@ type metal struct {
 	fuzz   float64
 }
 
-func newMetalFrom(albedo *vec3, fuzz float64) *metal {
+func newMetal(albedo *vec3, fuzz float64) *metal {
 
 	if fuzz > 1.0 {
 		fuzz = 1.0
@@ -81,7 +101,7 @@ type dielectric struct {
 	refractIndex float64
 }
 
-func newDielectricFrom(refractIndex float64) *dielectric {
+func newDielectric(refractIndex float64) *dielectric {
 	return &dielectric{
 		refractIndex: refractIndex,
 	}

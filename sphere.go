@@ -10,13 +10,7 @@ type sphere struct {
 	itemMaterial material
 }
 
-func newSphere() *sphere {
-	return &sphere{
-		center: newVec3(),
-	}
-}
-
-func newSphereFrom(center *vec3, radius float64, itemMaterial material) *sphere {
+func newSphere(center *vec3, radius float64, itemMaterial material) *sphere {
 	return &sphere{
 		center:       center,
 		radius:       radius,

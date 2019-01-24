@@ -7,26 +7,6 @@ import (
 	"os"
 )
 
-func randomInUnitSphere() *vec3 {
-	var p *vec3
-
-	unitVec := newVec3From(1.0, 1.0, 1.0)
-
-	for {
-		p = vec3ScalarMul(
-			vec3Sub(
-				newVec3From(rand.Float64(), rand.Float64(), rand.Float64()),
-				unitVec,
-			),
-			2.0,
-		)
-
-		if p.squaredLength() < 1.0 {
-			return p
-		}
-	}
-}
-
 func color(r *ray, hitables hitableList, depth int) *vec3 {
 	record := &hitRecord{}
 
@@ -54,24 +34,103 @@ func color(r *ray, hitables hitableList, depth int) *vec3 {
 	)
 }
 
+func randomWorld() hitableList {
+
+	world := make(hitableList, 1)
+	world[0] = newSphere(
+		newVec3From(0.0, -1000.0, 0.0),
+		1000.0,
+		newLambertian(newVec3From(0.5, 0.5, 0.5)),
+	)
+
+	refVec := newVec3From(4.0, 0.2, 0.0)
+
+	var object hitable
+
+	for a := -11; a < 11; a++ {
+		for b := -11; b < 11; b++ {
+			materialChoice := rand.Float64()
+			center := newVec3From(float64(a)+0.9*rand.Float64(), 0.2, float64(b)+0.9*rand.Float64())
+
+			if vec3Sub(center, refVec).length() > 0.9 {
+
+				switch {
+				case materialChoice < 0.8:
+					object = newSphere(
+						center,
+						0.2,
+						newLambertian(
+							newVec3From(
+								rand.Float64()*rand.Float64(),
+								rand.Float64()*rand.Float64(),
+								rand.Float64()*rand.Float64(),
+							),
+						),
+					)
+
+					world = append(world, object)
+				case materialChoice < 0.95:
+					object = newSphere(
+						center,
+						0.2,
+						newMetal(
+							newVec3From(
+								0.5*(1+rand.Float64()),
+								0.5*(1+rand.Float64()),
+								0.5*(1+rand.Float64()),
+							),
+							0.5*rand.Float64(),
+						),
+					)
+
+				default:
+					object = newSphere(center, 0.2, newDielectric(1.5))
+				}
+
+			} else {
+				object = nil
+			}
+
+			if object != nil {
+				world = append(world, object)
+			}
+
+		}
+	}
+
+	object = newSphere(newVec3From(0.0, 1.0, 0.0), 1.0, newDielectric(1.5))
+	world = append(world, object)
+
+	object = newSphere(newVec3From(-4.0, 1.0, 0.0), 1.0, newLambertian(newVec3From(0.4, 0.2, 0.1)))
+	world = append(world, object)
+
+	object = newSphere(newVec3From(4.0, 1.0, 0.0), 0.5, newMetal(newVec3From(0.7, 0.6, 0.5), 0.0))
+	world = append(world, object)
+
+	return world
+}
+
 func main() {
 	nx, ny := 200, 100
 	ns := 100.0
 
 	data := getPPMHeader(nx, ny)
 
-	world := make(hitableList, 4)
-	world[0] = newSphereFrom(newVec3From(0, 0, -1.0), 0.5, newLambertianFrom(newVec3From(0.1, 0.2, 0.5)))
-	world[1] = newSphereFrom(newVec3From(0, -100.5, -1.0), 100, newLambertianFrom(newVec3From(0.8, 0.8, 0.0)))
-	world[2] = newSphereFrom(newVec3From(1.0, 0, -1.0), 0.5, newMetalFrom(newVec3From(0.8, 0.6, 0.2), 1.0))
-	world[3] = newSphereFrom(newVec3From(-1.0, 0, -1.0), 0.5, newDielectricFrom(1.5))
+	world := randomWorld()
+
+	lookfrom := newVec3From(3, 3, 2)
+	lookat := newVec3From(0.0, 0.0, -1.0)
+	distToFocus := vec3Sub(lookfrom, lookat).length()
+	aperture := 2.0
 
 	cam := newCamera(
-		newVec3From(-2.0, 2.0, 1.0),
-		newVec3From(0.0, 0.0, -1.0),
+		lookfrom,
+		lookat,
 		newVec3From(0.0, 1.0, 0.0),
-		45,
+		20,
 		float64(nx)/float64(ny),
+		aperture,
+		distToFocus,
 	)
 
 	for j := ny - 1; j >= 0; j-- {
