@@ -30,5 +30,8 @@ func (r *ray) set(origin, direction *vec3) {
 }
 
 func (r *ray) pointAtParam(t float64) *vec3 {
-	return vec3Add(r.a, vec3ScalarMul(r.b, t))
+	p := vec3ScalarMul(r.b, t)
+	p.add(r.a)
+
+	return p
 }

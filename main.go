@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"math"
@@ -32,22 +33,25 @@ func color(random *rand.Rand, r *ray, hitables hitableList, depth int) *vec3 {
 		attenuation := newVec3()
 
 		if depth < 50 && record.itemMaterial.scatter(random, r, record, attenuation, scatteredRay) {
-			return vec3Mul(
-				attenuation,
-				color(random, scatteredRay, hitables, depth+1),
-			)
+			attenuation.mul(color(random, scatteredRay, hitables, depth+1))
+			return attenuation
 		}
 
-		return newVec3()
+		return attenuation
 	}
 
 	unitDirection := unitVector(r.direction())
 	t := 0.5 * (unitDirection.y() + 1.0)
 
-	return vec3Add(
-		vec3ScalarMul(newVec3From(1.0, 1.0, 1.0), 1.0-t),
-		vec3ScalarMul(newVec3From(0.5, 0.7, 1.0), t),
-	)
+	final := newVec3From(1.0, 1.0, 1.0)
+	final.scalarMul(1.0 - t)
+
+	b := newVec3From(0.5, 0.7, 1.0)
+	b.scalarMul(t)
+
+	final.add(b)
+
+	return final
 }
 
 func randomWorld() hitableList {
@@ -56,71 +60,73 @@ func randomWorld() hitableList {
 	world[0] = newSphere(
 		newVec3From(0.0, -1000.0, 0.0),
 		1000.0,
-		newLambertian(newVec3From(0.5, 0.5, 0.5)),
+		newLambertian(newVec3From(0.1, 0.4, 0.2)),
 	)
 
-	// refVec := newVec3From(4.0, 0.2, 0.0)
+	var object hitable
 
-	// var object hitable
+	refVec := newVec3From(0.0, 0.0, 0.0)
 
-	// for a := -11; a < 11; a++ {
-	// 	for b := -11; b < 11; b++ {
-	// 		materialChoice := rand.Float64()
-	// 		center := newVec3From(float64(a)+0.9*rand.Float64(), 0.2, float64(b)+0.9*rand.Float64())
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 
-	// 		if vec3Sub(center, refVec).length() > 0.9 {
+	for a := -5; a < 5; a++ {
+		for b := -5; b < 5; b++ {
+			materialChoice := r.Float64()
+			center := newVec3From(float64(a)+0.9*r.Float64(), 0.2, float64(b)+0.9*r.Float64())
 
-	// 			switch {
-	// 			case materialChoice < 0.8:
-	// 				object = newSphere(
-	// 					center,
-	// 					0.2,
-	// 					newLambertian(
-	// 						newVec3From(
-	// 							rand.Float64()*rand.Float64(),
-	// 							rand.Float64()*rand.Float64(),
-	// 							rand.Float64()*rand.Float64(),
-	// 						),
-	// 					),
-	// 				)
+			if vec3Sub(center, refVec).length() > 0.9 {
 
-	// 				world = append(world, object)
-	// 			case materialChoice < 0.95:
-	// 				object = newSphere(
-	// 					center,
-	// 					0.2,
-	// 					newMetal(
-	// 						newVec3From(
-	// 							0.5*(1+rand.Float64()),
-	// 							0.5*(1+rand.Float64()),
-	// 							0.5*(1+rand.Float64()),
-	// 						),
-	// 						0.5*rand.Float64(),
-	// 					),
-	// 				)
+				switch {
+				case materialChoice < 0.8:
+					object = newSphere(
+						center,
+						0.2,
+						newLambertian(
+							newVec3From(
+								r.Float64()*r.Float64(),
+								r.Float64()*r.Float64(),
+								r.Float64()*r.Float64(),
+							),
+						),
+					)
 
-	// 			default:
-	// 				object = newSphere(center, 0.2, newDielectric(1.5))
-	// 			}
+					world = append(world, object)
 
-	// 		} else {
-	// 			object = nil
-	// 		}
+				case materialChoice < 0.95:
+					object = newSphere(
+						center,
+						0.2,
+						newMetal(
+							newVec3From(
+								0.5*(1+r.Float64()),
+								0.5*(1+r.Float64()),
+								0.5*(1+r.Float64()),
+							),
+							0.5*r.Float64(),
+						),
+					)
 
-	// 		if object != nil {
-	// 			world = append(world, object)
-	// 		}
+				default:
+					object = newSphere(center, 0.2, newDielectric(1.5))
+				}
 
-	// 	}
-	// }
+			} else {
+				object = nil
+			}
 
-	object := newSphere(newVec3From(0.0, 1.0, 0.0), 1.0, newDielectric(1.5))
+			if object != nil {
+				world = append(world, object)
+			}
+		}
+	}
+
+	object = newSphere(newVec3From(0.0, 1.0, 0.0), 1.0, newDielectric(1.5))
 	world = append(world, object)
 
-	object = newSphere(newVec3From(-4.0, 1.0, 0.0), 1.0, newLambertian(newVec3From(0.4, 0.2, 0.1)))
+	object = newSphere(newVec3From(-3.0, 1.0, 0.0), 1.0, newLambertian(newVec3From(0.4, 0.2, 0.1)))
 	world = append(world, object)
 
-	object = newSphere(newVec3From(4.0, 1.0, 0.0), 0.5, newMetal(newVec3From(0.7, 0.6, 0.5), 0.0))
+	object = newSphere(newVec3From(3.0, 1.0, 0.0), 1.0, newMetal(newVec3From(0.7, 0.6, 0.5), 0.0))
 	world = append(world, object)
 
 	return world
@@ -129,8 +135,10 @@ func randomWorld() hitableList {
 const (
 	nx          = 200
 	ny          = 100
-	ns          = 100.0
-	workerCount = 4
+	ns          = 75.0
+	workerCount = 8
+	aperture    = 2.0
+	fov         = 60
 )
 
 func main() {
@@ -146,16 +154,16 @@ func main() {
 
 	world := randomWorld()
 
-	lookfrom := newVec3From(3, 3, 2)
-	lookat := newVec3From(0.0, 0.0, -1.0)
+	lookfrom := newVec3From(0.0, 3.0, 5.0)
+	lookat := newVec3From(0.0, 1.0, 0.0)
 	distToFocus := vec3Sub(lookfrom, lookat).length()
-	aperture := 1.0
+	vup := newVec3From(0.0, 1.0, 0.0)
 
 	cam := newCamera(
 		lookfrom,
 		lookat,
-		newVec3From(0.0, 1.0, 0.0),
-		60,
+		vup,
+		fov,
 		float64(nx)/float64(ny),
 		aperture,
 		distToFocus,
@@ -171,40 +179,41 @@ func main() {
 
 	createJobs(jobsChan, cam, world)
 
-	go finalizer(wg, resultsChan)
+	go finalize(wg, resultsChan)
 
-	var lines [ny * nx]string
+	lines := make([]string, ny*nx+1)
+
+	lines[0] = getPPMHeader(nx, ny)
 
 	for res := range resultsChan {
 		wg.Done()
-		lines[res.y*nx+res.x] = fmt.Sprintf("%d %d %d\n", res.r, res.g, res.b)
+
+		lines[res.y*nx+res.x+1] = fmt.Sprintf("%d %d %d\n", res.r, res.g, res.b)
 	}
 
-	data := getPPMHeader(nx, ny)
-
-	for _, line := range lines {
-		data += line
-	}
-
-	writeFile([]byte(data))
+	writeFile(lines)
 }
 
 func getPPMHeader(nx, ny int) string {
 	return fmt.Sprintf("P3\n%d %d\n255\n", nx, ny)
 }
 
-func writeFile(data []byte) {
+func writeFile(lines []string) {
 	file, err := os.Create("picture.ppm")
 
 	checkErr(err)
 
 	defer file.Close()
 
-	n, err := file.Write(data)
+	w := bufio.NewWriter(file)
+
+	for _, line := range lines {
+		fmt.Fprint(w, line)
+	}
+
+	err = w.Flush()
 
 	checkErr(err)
-
-	fmt.Printf("Wrote %d bytes\n", n)
 }
 
 func checkErr(err error) {
@@ -222,8 +231,7 @@ func startWorkers(jobsChan chan job, resultsChan chan result) {
 func worker(id int, jobsChan chan job, resultsChan chan result) {
 	c := newVec3()
 
-	s := rand.NewSource(time.Now().Unix())
-	random := rand.New(s)
+	random := rand.New(rand.NewSource(time.Now().Unix()))
 
 	for j := range jobsChan {
 		c.reset()
@@ -250,7 +258,7 @@ func worker(id int, jobsChan chan job, resultsChan chan result) {
 	}
 }
 
-func finalizer(wg *sync.WaitGroup, resultsChan chan result) {
+func finalize(wg *sync.WaitGroup, resultsChan chan result) {
 	wg.Wait()
 	close(resultsChan)
 }

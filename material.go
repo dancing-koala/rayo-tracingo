@@ -6,22 +6,13 @@ import (
 )
 
 func randomInUnitSphere(r *rand.Rand) *vec3 {
-	var p *vec3
-
 	unitVec := newVec3From(1.0, 1.0, 1.0)
+	p := newVec3()
 
 	for {
-		p = vec3ScalarMul(
-			vec3Sub(
-				newVec3From(
-					r.Float64(),
-					r.Float64(),
-					r.Float64(),
-				),
-				unitVec,
-			),
-			2.0,
-		)
+		p.set(r.Float64(), r.Float64(), r.Float64())
+		p.sub(unitVec)
+		p.scalarMul(2.0)
 
 		if p.squaredLength() < 1.0 {
 			return p
@@ -44,16 +35,12 @@ func newLambertian(albedo *vec3) *lambertian {
 }
 
 func (l *lambertian) scatter(r *rand.Rand, inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
-	target := vec3Add(
-		vec3Add(
-			record.p,
-			record.normal,
-		),
-		randomInUnitSphere(r),
-	)
+	target := vec3Add(record.p, record.normal)
+	target.add(randomInUnitSphere(r))
+	target.sub(record.p)
 
 	scatteredRay.a = record.p
-	scatteredRay.b = vec3Sub(target, record.p)
+	scatteredRay.b = target
 
 	vec3Copy(l.albedo, attenuation)
 
@@ -88,14 +75,18 @@ func reflect(v, n *vec3) *vec3 {
 }
 
 func (m *metal) scatter(r *rand.Rand, inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
+
+	rs := randomInUnitSphere(r)
+	rs.scalarMul(m.fuzz)
+
 	reflected := reflect(unitVector(inputRay.direction()), record.normal)
+	reflected.add(rs)
+
 	scatteredRay.set(
 		record.p,
-		vec3Add(
-			reflected,
-			vec3ScalarMul(randomInUnitSphere(r), m.fuzz),
-		),
+		reflected,
 	)
+
 	vec3Copy(m.albedo, attenuation)
 
 	return dot(scatteredRay.direction(), record.normal) > 0
@@ -152,18 +143,10 @@ func refract(v, n *vec3, niOverNt float64, refracted *vec3) bool {
 	discriminant := 1.0 - niOverNt*niOverNt*(1-dt*dt)
 
 	if discriminant > 0 {
-		refracted.copyFrom(
-			vec3Sub(
-				vec3ScalarMul(
-					vec3Sub(
-						uv,
-						vec3ScalarMul(n, dt),
-					),
-					niOverNt,
-				),
-				vec3ScalarMul(n, math.Sqrt(discriminant)),
-			),
-		)
+		refracted.copyFrom(uv)
+		refracted.sub(vec3ScalarMul(n, dt))
+		refracted.scalarMul(niOverNt)
+		refracted.sub(vec3ScalarMul(n, math.Sqrt(discriminant)))
 
 		return true
 	}
@@ -176,4 +159,22 @@ func schlick(cosine, refractIndex float64) float64 {
 	r0 = r0 * r0
 
 	return r0 + (1-r0)*math.Pow(1.0-cosine, 5.0)
+}
+
+type simpleSolid struct {
+	color *vec3
+}
+
+func newSimpleSolid(color *vec3) *simpleSolid {
+	return &simpleSolid{color: color}
+}
+
+func (s *simpleSolid) scatter(r *rand.Rand, inputRay *ray, record *hitRecord, attenuation *vec3, scatteredRay *ray) bool {
+	scatteredRay.set(
+		record.p,
+		s.color,
+	)
+	vec3Copy(s.color, attenuation)
+
+	return true
 }

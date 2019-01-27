@@ -5,24 +5,23 @@ import (
 	"math/rand"
 )
 
+var unitForDisk = newVec3From(1.0, 1.0, 0.0)
+
 func randomInUnitDisk(r *rand.Rand) *vec3 {
-	var p *vec3
+	// p := newVec3()
+	// v := unitForDisk
 
-	v := newVec3From(1.0, 1.0, 0.0)
+	// for {
+	// 	p.set(r.Float64(), r.Float64(), 0.0)
+	// 	p.scalarMul(2.0)
+	// 	p.sub(v)
 
-	for {
-		p = vec3Sub(
-			vec3ScalarMul(
-				newVec3From(r.Float64(), r.Float64(), 0.0),
-				2.0,
-			),
-			v,
-		)
+	// 	if dot(p, p) >= 1.0 {
+	// 		return p
+	// 	}
+	// }
 
-		if dot(p, p) >= 1.0 {
-			return p
-		}
-	}
+	return unitForDisk
 }
 
 type camera struct {
@@ -30,9 +29,7 @@ type camera struct {
 	lowerLeftCorner *vec3
 	horizontal      *vec3
 	vertical        *vec3
-	u               *vec3
-	v               *vec3
-	w               *vec3
+	u, v, w         *vec3
 	lensRadius      float64
 }
 
@@ -42,20 +39,17 @@ func newCamera(lookfrom, lookat, vup *vec3, vfov, aspect, aperture, focusDist fl
 	halfHeight := math.Tan(theta / 2.0)
 	halfWidth := aspect * halfHeight
 
-	w := unitVector(vec3Sub(lookfrom, lookat))
-	u := unitVector(cross(vup, w))
+	w := vec3Sub(lookfrom, lookat)
+	w.makeUnitVector()
+
+	u := cross(w, vup)
+	u.makeUnitVector()
+
 	v := cross(w, u)
 
-	llc := vec3Sub(
-		vec3Sub(
-			vec3Sub(
-				lookfrom,
-				vec3ScalarMul(u, focusDist*halfWidth),
-			),
-			vec3ScalarMul(v, focusDist*halfHeight),
-		),
-		vec3ScalarMul(w, focusDist),
-	)
+	llc := vec3Sub(lookfrom, vec3ScalarMul(u, focusDist*halfWidth))
+	llc.sub(vec3ScalarMul(v, focusDist*halfHeight))
+	llc.sub(vec3ScalarMul(w, focusDist))
 
 	return &camera{
 		origin:          lookfrom,
@@ -71,26 +65,18 @@ func newCamera(lookfrom, lookat, vup *vec3, vfov, aspect, aperture, focusDist fl
 
 func (c *camera) getRay(r *rand.Rand, s, t float64) *ray {
 
-	rd := vec3ScalarMul(randomInUnitDisk(r), c.lensRadius)
-	offset := vec3Add(
-		vec3ScalarMul(c.u, rd.x()),
-		vec3ScalarMul(c.v, rd.y()),
-	)
+	rd := randomInUnitDisk(r)
+	rd.scalarMul(c.lensRadius)
 
-	return newRayFrom(
-		vec3Add(c.origin, offset),
-		vec3Sub(
-			vec3Add(
-				c.lowerLeftCorner,
-				vec3Add(
-					vec3ScalarMul(c.horizontal, s),
-					vec3ScalarMul(c.vertical, t),
-				),
-			),
-			vec3Add(
-				c.origin,
-				offset,
-			),
-		),
-	)
+	offset := vec3ScalarMul(c.u, rd.x())
+	offset.add(vec3ScalarMul(c.v, rd.y()))
+
+	newOrigin := vec3Add(c.origin, offset)
+
+	direction := vec3ScalarMul(c.horizontal, s)
+	direction.add(vec3ScalarMul(c.vertical, t))
+	direction.add(c.lowerLeftCorner)
+	direction.sub(newOrigin)
+
+	return newRayFrom(newOrigin, direction)
 }

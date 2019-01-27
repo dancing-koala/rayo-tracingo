@@ -87,6 +87,10 @@ func vec3ScalarMul(v *vec3, t float64) *vec3 {
 }
 
 func vec3ScalarDiv(v *vec3, t float64) *vec3 {
+	if t == 0 {
+		return newVec3()
+	}
+
 	return newVec3From(v.e[0]/t, v.e[1]/t, v.e[2]/t)
 }
 
@@ -138,11 +142,14 @@ func (v *vec3) scalarMul(t float64) {
 }
 
 func (v *vec3) scalarDiv(t float64) {
-	var k = 1.0 / t
-
-	v.e[0] *= k
-	v.e[1] *= k
-	v.e[2] *= k
+	if t == 0.0 {
+		v.reset()
+	} else {
+		var k = 1.0 / t
+		v.e[0] *= k
+		v.e[1] *= k
+		v.e[2] *= k
+	}
 }
 
 func (v *vec3) reset() {

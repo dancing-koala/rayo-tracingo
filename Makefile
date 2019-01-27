@@ -14,6 +14,5 @@ bench:
 build:
 	go build -o $(BIN)
 
-profiling: build
-	./$(BIN)
-	pprof -http=:8080 ./$(BIN).prof
+profiling: run
+	pprof -http=:5000 ./$(BIN).prof
