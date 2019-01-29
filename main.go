@@ -1,8 +1,9 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"math"
 	"math/rand"
 	"os"
@@ -13,7 +14,7 @@ import (
 
 type result struct {
 	x, y    int
-	r, g, b int
+	r, g, b uint8
 }
 
 type job struct {
@@ -64,39 +65,17 @@ func main() {
 
 	go finalize(wg, resultsChan)
 
-	lines := make([]string, ny*nx+1)
-
-	lines[0] = getPPMHeader(nx, ny)
+	img := image.NewRGBA(image.Rect(0, 0, nx, ny))
 
 	for res := range resultsChan {
 		wg.Done()
-
-		lines[res.y*nx+res.x+1] = fmt.Sprintf("%d %d %d\n", res.r, res.g, res.b)
+		img.Set(res.x, res.y, color.RGBA{res.r, res.g, res.b, 0xff})
 	}
 
-	writeFile(lines)
-}
-
-func getPPMHeader(nx, ny int) string {
-	return fmt.Sprintf("P3\n%d %d\n255\n", nx, ny)
-}
-
-func writeFile(lines []string) {
-	file, err := os.Create("picture.ppm")
+	f, err := os.Create("result.png")
 
 	checkErr(err)
-
-	defer file.Close()
-
-	w := bufio.NewWriter(file)
-
-	for _, line := range lines {
-		fmt.Fprint(w, line)
-	}
-
-	err = w.Flush()
-
-	checkErr(err)
+	png.Encode(f, img)
 }
 
 func checkErr(err error) {
@@ -105,7 +84,7 @@ func checkErr(err error) {
 	}
 }
 
-func color(random *rand.Rand, r *ray, hitables hitableList, depth int) *vec3 {
+func getColor(random *rand.Rand, r *ray, hitables hitableList, depth int) *vec3 {
 	record := &hitRecord{}
 
 	if hitables.hit(r, 0.001, math.MaxFloat64, record) {
@@ -114,7 +93,7 @@ func color(random *rand.Rand, r *ray, hitables hitableList, depth int) *vec3 {
 		attenuation := newVec3()
 
 		if depth < 50 && record.itemMaterial.scatter(random, r, record, attenuation, scatteredRay) {
-			attenuation.mul(color(random, scatteredRay, hitables, depth+1))
+			attenuation.mul(getColor(random, scatteredRay, hitables, depth+1))
 			return attenuation
 		}
 
@@ -233,7 +212,7 @@ func worker(id int, jobsChan chan job, resultsChan chan result) {
 
 			r := j.cam.getRay(random, u, v)
 
-			c.add(color(random, r, j.world, 0))
+			c.add(getColor(random, r, j.world, 0))
 		}
 
 		c.scalarDiv(ns)
@@ -242,9 +221,9 @@ func worker(id int, jobsChan chan job, resultsChan chan result) {
 		resultsChan <- result{
 			x: j.x,
 			y: j.y,
-			r: int(255.99 * c.at(0)),
-			g: int(255.99 * c.at(1)),
-			b: int(255.99 * c.at(2)),
+			r: uint8(255.99 * c.at(0)),
+			g: uint8(255.99 * c.at(1)),
+			b: uint8(255.99 * c.at(2)),
 		}
 	}
 }
