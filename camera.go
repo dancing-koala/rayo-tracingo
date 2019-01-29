@@ -7,23 +7,6 @@ import (
 
 var unitForDisk = newVec3From(1.0, 1.0, 0.0)
 
-func randomInUnitDisk(r *rand.Rand) *vec3 {
-	// p := newVec3()
-	// v := unitForDisk
-
-	// for {
-	// 	p.set(r.Float64(), r.Float64(), 0.0)
-	// 	p.scalarMul(2.0)
-	// 	p.sub(v)
-
-	// 	if dot(p, p) >= 1.0 {
-	// 		return p
-	// 	}
-	// }
-
-	return unitForDisk
-}
-
 type camera struct {
 	origin          *vec3
 	lowerLeftCorner *vec3
@@ -65,18 +48,10 @@ func newCamera(lookfrom, lookat, vup *vec3, vfov, aspect, aperture, focusDist fl
 
 func (c *camera) getRay(r *rand.Rand, s, t float64) *ray {
 
-	rd := randomInUnitDisk(r)
-	rd.scalarMul(c.lensRadius)
-
-	offset := vec3ScalarMul(c.u, rd.x())
-	offset.add(vec3ScalarMul(c.v, rd.y()))
-
-	newOrigin := vec3Add(c.origin, offset)
-
 	direction := vec3ScalarMul(c.horizontal, s)
 	direction.add(vec3ScalarMul(c.vertical, t))
 	direction.add(c.lowerLeftCorner)
-	direction.sub(newOrigin)
+	direction.sub(c.origin)
 
-	return newRayFrom(newOrigin, direction)
+	return newRayFrom(c.origin, direction)
 }

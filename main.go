@@ -3,12 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"math"
 	"math/rand"
 	"os"
 	"runtime"
-	"runtime/pprof"
 	"sync"
 	"time"
 )
@@ -22,6 +20,89 @@ type job struct {
 	x, y  int
 	cam   *camera
 	world hitableList
+}
+
+const (
+	nx          = 800
+	ny          = 400
+	ns          = 100.0
+	workerCount = 8
+	aperture    = 1.0
+	fov         = 60
+)
+
+func main() {
+
+	runtime.GOMAXPROCS(2)
+
+	world := randomWorld()
+
+	lookfrom := newVec3From(0.0, 3.0, 5.0)
+	lookat := newVec3From(0.0, 1.0, 0.0)
+	distToFocus := vec3Sub(lookfrom, lookat).length()
+	vup := newVec3From(0.0, 1.0, 0.0)
+
+	cam := newCamera(
+		lookfrom,
+		lookat,
+		vup,
+		fov,
+		float64(nx)/float64(ny),
+		aperture,
+		distToFocus,
+	)
+
+	wg := &sync.WaitGroup{}
+	wg.Add(nx * ny)
+
+	jobsChan := make(chan job, nx*ny)
+	resultsChan := make(chan result, workerCount)
+
+	startWorkers(jobsChan, resultsChan)
+
+	createJobs(jobsChan, cam, world)
+
+	go finalize(wg, resultsChan)
+
+	lines := make([]string, ny*nx+1)
+
+	lines[0] = getPPMHeader(nx, ny)
+
+	for res := range resultsChan {
+		wg.Done()
+
+		lines[res.y*nx+res.x+1] = fmt.Sprintf("%d %d %d\n", res.r, res.g, res.b)
+	}
+
+	writeFile(lines)
+}
+
+func getPPMHeader(nx, ny int) string {
+	return fmt.Sprintf("P3\n%d %d\n255\n", nx, ny)
+}
+
+func writeFile(lines []string) {
+	file, err := os.Create("picture.ppm")
+
+	checkErr(err)
+
+	defer file.Close()
+
+	w := bufio.NewWriter(file)
+
+	for _, line := range lines {
+		fmt.Fprint(w, line)
+	}
+
+	err = w.Flush()
+
+	checkErr(err)
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 func color(random *rand.Rand, r *ray, hitables hitableList, depth int) *vec3 {
@@ -130,96 +211,6 @@ func randomWorld() hitableList {
 	world = append(world, object)
 
 	return world
-}
-
-const (
-	nx          = 200
-	ny          = 100
-	ns          = 75.0
-	workerCount = 8
-	aperture    = 2.0
-	fov         = 60
-)
-
-func main() {
-
-	runtime.GOMAXPROCS(4)
-
-	f, err := os.Create("rayo-tracingo.prof")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
-
-	world := randomWorld()
-
-	lookfrom := newVec3From(0.0, 3.0, 5.0)
-	lookat := newVec3From(0.0, 1.0, 0.0)
-	distToFocus := vec3Sub(lookfrom, lookat).length()
-	vup := newVec3From(0.0, 1.0, 0.0)
-
-	cam := newCamera(
-		lookfrom,
-		lookat,
-		vup,
-		fov,
-		float64(nx)/float64(ny),
-		aperture,
-		distToFocus,
-	)
-
-	wg := &sync.WaitGroup{}
-	wg.Add(nx * ny)
-
-	jobsChan := make(chan job, nx*ny)
-	resultsChan := make(chan result, workerCount)
-
-	startWorkers(jobsChan, resultsChan)
-
-	createJobs(jobsChan, cam, world)
-
-	go finalize(wg, resultsChan)
-
-	lines := make([]string, ny*nx+1)
-
-	lines[0] = getPPMHeader(nx, ny)
-
-	for res := range resultsChan {
-		wg.Done()
-
-		lines[res.y*nx+res.x+1] = fmt.Sprintf("%d %d %d\n", res.r, res.g, res.b)
-	}
-
-	writeFile(lines)
-}
-
-func getPPMHeader(nx, ny int) string {
-	return fmt.Sprintf("P3\n%d %d\n255\n", nx, ny)
-}
-
-func writeFile(lines []string) {
-	file, err := os.Create("picture.ppm")
-
-	checkErr(err)
-
-	defer file.Close()
-
-	w := bufio.NewWriter(file)
-
-	for _, line := range lines {
-		fmt.Fprint(w, line)
-	}
-
-	err = w.Flush()
-
-	checkErr(err)
-}
-
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
 }
 
 func startWorkers(jobsChan chan job, resultsChan chan result) {
